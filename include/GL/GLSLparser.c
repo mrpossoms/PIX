@@ -1,6 +1,8 @@
 #include "GLSLparser.h"
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 static const char* GLSL_TYPE_NAMES[] = {
 	// vectors are suffixed with a number
@@ -25,7 +27,7 @@ static const char* GLSL_TYPE_NAMES[] = {
 	"sampler",
 };
 
-static const char* GLSL_TYPE_DATA_TYPES[] = {
+static const enum PixGLSLPrimitiveType GLSL_TYPE_DATA_TYPES[] = {
 	PIX_GLSL_FLOAT, //"vec",
 	PIX_GLSL_FLOAT, //"dvec",
 	PIX_GLSL_INT,   //"ivec",
@@ -92,7 +94,7 @@ char* _glsl_genNextToken(struct PixGLSLParseState* state)
 
 int _glsl_char2elements(char c)
 {
-	switch(token[prefixLen]){
+	switch(c){
 		case '2':
 			return 2;
 		case '3':
@@ -168,7 +170,7 @@ int _glsl_parseDecl(struct PixGLSLParseState* state)
 	struct PixGLSLParameter* current = &state->currentParameter;
 	int hasDeclType   = current->type;
 	int hasPrecision  = current->precision;
-	int hasDataType   = current->elements;
+	int hasDataType   = current->width * current->height;
 	int hasIdentifier = strlen(current->name);
 
 	if(hasIdentifier) return PIX_GLSL_MSG_DONE_PARSING_DECL;
@@ -198,7 +200,7 @@ int _glsl_parseDecl(struct PixGLSLParseState* state)
 		}
 	}
 	else if(!hasDataType){
-		int ret = _glsl_parseDataType(token, currentParameter);
+		int ret = _glsl_parseDataType(token, current);
 		if(ret) return ret;
 	}
 	else if(!hasIdentifier){
@@ -215,6 +217,17 @@ void _glsl_initParameter(struct PixGLSLParameter* param)
 	param->precision = PIX_GLSL_UNKNOWNP;
 }
 
+void PixGLSLPrintParam(struct PixGLSLParameter* param)
+{
+	printf("Parameter - '%s'\n\tSize: %d\n\tDims: %d x %d\n\tData Type: %d", 
+		param->name,
+		param->bytes,
+		param->width,
+		param->height,
+		param->dataType
+	);
+}
+
 int PixGLSLParseSource(
 	struct PixGLSLParseState* state,
 	const char* src)
@@ -225,18 +238,18 @@ int PixGLSLParseSource(
 	state->parsingBegan = 0;
 
 	strcpy(state->src, src);
-	_glsl_initParameter(state);
+	_glsl_initParameter(&state->currentParameter);
 
 	do
 	{
 		ret = _glsl_parseDecl(state);
 
 		if(ret == PIX_GLSL_MSG_DONE_PARSING_DECL){
-			if(state->current.type == PIX_GLSL_ATTRIB){
-				state->attributes[state->attributeCount++] = state->current;
+			if(state->currentParameter.type == PIX_GLSL_ATTRIB){
+				state->attributes[state->attributeCount++] = state->currentParameter;
 			}
-			else if(state->current.type == PIX_GLSL_UNI){
-				state->uniforms[state->uniformCount++] = state->current;
+			else if(state->currentParameter.type == PIX_GLSL_UNI){
+				state->uniforms[state->uniformCount++] = state->currentParameter;
 			}
 		}
 	}

@@ -13,7 +13,7 @@ enum PixGLSLParamType{
 };
 
 enum PixGLSLPrecision{
-	PIX_GLSL_UNKNOWNP = -2;
+	PIX_GLSL_UNKNOWNP = -2,
 	PIX_GLSL_NOP      = -1,
 	PIX_GLSL_LOWP     =  0,
 	PIX_GLSL_HIGHP    =  1,
@@ -38,18 +38,19 @@ struct PixGLSLParameter{
 
 struct PixGLSLParseState{
 	// variables for scanning the source
-	const char*  src;
+	char*  src;
 	unsigned int parsingBegan;
 
 	struct PixGLSLParameter  attributes[64];
 	unsigned int             attributeCount;
 
-	struct PixGLSLParameter* uniforms[64];
+	struct PixGLSLParameter  uniforms[64];
 	unsigned int             uniformCount;
 
 	struct PixGLSLParameter  currentParameter;
 };
 
+void PixGLSLPrintParam(struct PixGLSLParameter* param);
 int PixGLSLParseSource(
 	struct PixGLSLParseState* state,
 	const char* src
