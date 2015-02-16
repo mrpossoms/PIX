@@ -41,11 +41,11 @@ struct PixGLSLParseState{
 	char*  src;
 	unsigned int parsingBegan;
 
-	struct PixGLSLParameter  attributes[64];
 	unsigned int             attributeCount;
+	struct PixGLSLParameter  attributes[64];
 
-	struct PixGLSLParameter  uniforms[64];
 	unsigned int             uniformCount;
+	struct PixGLSLParameter  uniforms[64];
 
 	struct PixGLSLParameter  currentParameter;
 };

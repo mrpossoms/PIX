@@ -13,9 +13,22 @@ TEST_INIT
 //      |_|\___||___/\__| |_|   \__,_|_| |_|\___|___(_)                                               
 int shouldReturnSingleAttribute(void* params)
 {
-	struct PixGLSLParseState state;
+	struct PixGLSLParseState state = {};
 	PixGLSLParseSource(&state, "attribute vec3 aPosition;");
+	return 0;
+}
 
+int shouldReturnSingleAttributeArray(void* params)
+{
+	struct PixGLSLParseState state = {};
+	PixGLSLParseSource(&state, "attribute vec3 aPosition;\nattribute   float  aWeights[10];");
+	return 0;
+}
+
+int shouldReturnSingleUniform(void* params)
+{
+	struct PixGLSLParseState state = {};
+	PixGLSLParseSource(&state, "uniform mat4 VP;\n");
 	return 0;
 }
 
@@ -33,6 +46,8 @@ int main(void){
 
 	// Run sequence of test function invocations here
 	result |= TEST(shouldReturnSingleAttribute, "Parse Single Attribute", NULL);
+	result |= TEST(shouldReturnSingleAttributeArray, "Parse Array", NULL);
+	result |= TEST(shouldReturnSingleUniform, "Parse Uniform", NULL);
 
 	return result; // value to be read by test script
 }

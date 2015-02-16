@@ -1,4 +1,5 @@
+C_FLAGS = -g
 PARSER_SRC = ./../include/GL/*.c
 
 GLSLparser:
-	gcc -I./../include/ GLSLparserTests.c $(PARSER_SRC) -o GLSLparserTests.bin
+	gcc $(C_FLAGS) -I./../include/ GLSLparserTests.c $(PARSER_SRC) -o GLSLparserTests.bin

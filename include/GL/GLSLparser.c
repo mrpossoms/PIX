@@ -3,6 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <assert.h>
+
+#define PIX_GLSL_DEBUG
 
 static const char* GLSL_TYPE_NAMES[] = {
 	// vectors are suffixed with a number
@@ -83,13 +86,19 @@ static const char* GLSL_PRECISIONS[] = {
 
 char* _glsl_genNextToken(struct PixGLSLParseState* state)
 {
-	char* str = NULL;
+	char* str = NULL, *out;
 	if(!state->parsingBegan){
 		str = state->src;
 		state->parsingBegan = 1;
 	}
 
-	return strtok(str, " \t\n[]");
+	out = strtok(str, " \t\n[]");
+
+#ifdef PIX_GLSL_DEBUG
+	printf("Token: '%s' %x\n", out, (unsigned int)out);
+#endif
+
+	return out;
 }
 
 int _glsl_char2elements(char c)
@@ -132,7 +141,7 @@ int _glsl_parseDataType(char* token, struct PixGLSLParameter* param)
 		param->height   = _glsl_char2elements(token[prefixLen + 2]);
 	}
 	else{
-		return 0;
+		param->width = param->height = 1;
 	}
 
 	// make sure elements were returned
@@ -148,16 +157,23 @@ int _glsl_parseIdentifier(struct PixGLSLParseState* state, char* token)
 	struct PixGLSLParameter* current = &state->currentParameter;	
 	int i = 0, tokenLen = strlen(token);
 
+	write(1, "ID\n", 3);
+
 	// non array?
-	if(token[tokenLen] == ';'){
-		memcpy(current->name, token, tokenLen);
+	if(token[tokenLen - 1] == ';'){
+		memcpy(current->name, token, tokenLen - 1);
+		printf("identifier: '%s'\n", current->name);
 		return 0;
+	}
+	else{ // it's probably an array!
+		memcpy(current->name, token, tokenLen - 1);
 	}
 
 	// the statement hasn't been terminated in the identifier
 	// an array declaration must have taken place
 	do{
 		token = _glsl_genNextToken(state);
+		if(!token) break;
 		sscanf(token, "%d", &current->arrayLens[i++]);
 		if(i >= 3) return PIX_GLSL_MSG_ERR_ARRAY_TOO_MANY_DIMS;
 	}while(token[0] != ';');
@@ -177,9 +193,17 @@ int _glsl_parseDecl(struct PixGLSLParseState* state)
 
 	char* token = _glsl_genNextToken(state);
 
-	if(!token) return PIX_GLSL_MSG_DONE_PARSING;
+	if(!token){
+#ifdef PIX_GLSL_DEBUG
+		printf("Token is null! done parsing!\n");
+#endif
+		return PIX_GLSL_MSG_DONE_PARSING;
+	}
 
 	if(!hasDeclType){
+#ifdef PIX_GLSL_DEBUG
+		printf("GETTING DECL TYPE\n");
+#endif
 		if(!strcmp(token, "attribute")) current->type = PIX_GLSL_ATTRIB;
 		if(!strcmp(token, "uniform"))   current->type = PIX_GLSL_UNI;
 
@@ -189,6 +213,10 @@ int _glsl_parseDecl(struct PixGLSLParseState* state)
 	}
 	else if(!hasPrecision && !hasDataType){
 		int i = 0;
+
+#ifdef PIX_GLSL_DEBUG
+		printf("GETTING PRECISION\n");
+#endif
 
 		// iterate over all precicion strings, try to find one that matches
 		current->precision = PIX_GLSL_NOP; // otherwise, indicate that none was set
@@ -200,10 +228,16 @@ int _glsl_parseDecl(struct PixGLSLParseState* state)
 		}
 	}
 	else if(!hasDataType){
+#ifdef PIX_GLSL_DEBUG
+		printf("GETTING DATA TYPE\n");
+#endif
 		int ret = _glsl_parseDataType(token, current);
 		if(ret) return ret;
 	}
 	else if(!hasIdentifier){
+#ifdef PIX_GLSL_DEBUG
+		printf("GETTING IDENTIFIER\n");
+#endif
 		int ret = _glsl_parseIdentifier(state, token);
 		if(ret) return ret;
 	}
@@ -219,13 +253,40 @@ void _glsl_initParameter(struct PixGLSLParameter* param)
 
 void PixGLSLPrintParam(struct PixGLSLParameter* param)
 {
-	printf("Parameter - '%s'\n\tSize: %d\n\tDims: %d x %d\n\tData Type: %d", 
-		param->name,
-		param->bytes,
-		param->width,
-		param->height,
-		param->dataType
-	);
+	int i;
+
+	if(param->type == PIX_GLSL_ATTRIB){
+		printf("attribute ");
+	}
+	else if(param->type == PIX_GLSL_UNI){
+		printf("uniform ");
+	}
+	else{
+		return;
+	}
+
+	switch(param->dataType){
+		case PIX_GLSL_FLOAT:
+			printf("float");
+			break;
+		case PIX_GLSL_INT:
+			printf("int");
+			break;
+		case PIX_GLSL_UINT:
+			printf("uint");
+			break;
+	}
+
+	printf("%dx%d ", param->width, param->height);
+
+	printf("%s", param->name);
+
+	for(i = 0; i < 3; ++i){
+		if(!param->arrayLens[i]) break;
+		printf("[%d]", param->arrayLens[i]);
+	}
+
+	printf("\n");
 }
 
 int PixGLSLParseSource(
@@ -234,23 +295,44 @@ int PixGLSLParseSource(
 {
 	int ret = 0;
 
+	assert(state->attributeCount == 0);
+	assert(state->uniformCount   == 0);
+
 	state->src          = malloc(strlen(src) + 1);
 	state->parsingBegan = 0;
 
 	strcpy(state->src, src);
 	_glsl_initParameter(&state->currentParameter);
 
+#ifdef PIX_GLSL_DEBUG
+	printf("Initialized ready to go!\n");
+#endif
+
 	do
 	{
 		ret = _glsl_parseDecl(state);
 
-		if(ret == PIX_GLSL_MSG_DONE_PARSING_DECL){
+		if(ret == PIX_GLSL_MSG_DONE_PARSING_DECL || ret == PIX_GLSL_MSG_DONE_PARSING){
+#ifdef PIX_GLSL_DEBUG
+			printf("Finished parsing decl\n");
+#endif
+			PixGLSLPrintParam(&state->currentParameter);
+		
 			if(state->currentParameter.type == PIX_GLSL_ATTRIB){
+#ifdef PIX_GLSL_DEBUG
+				printf("Parsed an attribute, current count %u\n", state->attributeCount);
+#endif
 				state->attributes[state->attributeCount++] = state->currentParameter;
 			}
 			else if(state->currentParameter.type == PIX_GLSL_UNI){
+#ifdef PIX_GLSL_DEBUG
+				printf("Parsed a uniforms\n");
+#endif
 				state->uniforms[state->uniformCount++] = state->currentParameter;
 			}
+
+			// we're done parsing the param, reset
+			_glsl_initParameter(&state->currentParameter);
 		}
 	}
 	while(ret != PIX_GLSL_MSG_DONE_PARSING);
