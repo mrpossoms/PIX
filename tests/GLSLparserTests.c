@@ -4,6 +4,8 @@
 
 TEST_INIT
 
+static const char* realProgram = "attribute vec4 position;\n\nuniform mat4 MVP;\nuniform lowp vec4 color;\n\nvarying lowp vec4  tintColor;\n\nvoid main()\n{\n    gl_PointSize = 150.0;\n    gl_Position = MVP * position;\n    \n    tintColor = color;// * opacity;\n}";
+
 //-----------------------------------------------------------------------------
 //    _______        _     ______                      
 //   |__   __|      | |   |  ____|                     
@@ -28,7 +30,23 @@ int shouldReturnSingleAttributeArray(void* params)
 int shouldReturnSingleUniform(void* params)
 {
 	struct PixGLSLParseState state = {};
-	PixGLSLParseSource(&state, "uniform mat4 VP;\n");
+	PixGLSLParseSource(&state, "uniform mat3x2 VP;\nvoid main(void){ }");
+	return 0;
+}
+
+int shouldParseParametersOfProgram(void* params)
+{
+	struct PixGLSLParseState state = {};
+	PixGLSLParseSource(&state, realProgram);
+	
+	if(state.attributeCount != 1){
+		return -1;
+	}
+
+	if(state.uniformCount != 2){
+		return -2;
+	}
+
 	return 0;
 }
 
@@ -48,6 +66,7 @@ int main(void){
 	result |= TEST(shouldReturnSingleAttribute, "Parse Single Attribute", NULL);
 	result |= TEST(shouldReturnSingleAttributeArray, "Parse Array", NULL);
 	result |= TEST(shouldReturnSingleUniform, "Parse Uniform", NULL);
+	result |= TEST(shouldParseParametersOfProgram, "Parse Program", NULL);
 
 	return result; // value to be read by test script
 }

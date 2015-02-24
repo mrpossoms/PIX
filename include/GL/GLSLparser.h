@@ -10,6 +10,7 @@ enum PixGLSLParamType{
 	PIX_GLSL_NONE = 0,
 	PIX_GLSL_ATTRIB,
 	PIX_GLSL_UNI,
+	PIX_GLSL_VARYING,
 };
 
 enum PixGLSLPrecision{

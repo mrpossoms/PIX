@@ -133,14 +133,27 @@ int _glsl_parseDataType(char* token, struct PixGLSLParameter* param)
 
 	// a type is being defined that will have a dimension term
 	if(i < 5){ // VECTOR
+		printf("It's a vector!\n");
 		param->width    = 1;
 		param->height   = _glsl_char2elements(token[prefixLen]);
 	}
 	else if(i == 5){ // MATRIX
-		param->width    = _glsl_char2elements(token[prefixLen]);
-		param->height   = _glsl_char2elements(token[prefixLen + 2]);
+		printf("It's a matrix\n");
+		int suffixLen = strlen(token) - prefixLen;
+
+		if(suffixLen > 1){
+			param->width  = _glsl_char2elements(token[prefixLen]);
+			param->height = _glsl_char2elements(token[prefixLen + 2]);			
+		}
+		else{
+			param->height = param->width = _glsl_char2elements(token[prefixLen]);
+		}
+
+		printf("Dims %dx%d\n", param->width, param->height);
+
 	}
 	else{
+		printf("It's a scalar\n");
 		param->width = param->height = 1;
 	}
 
@@ -193,9 +206,9 @@ int _glsl_parseDecl(struct PixGLSLParseState* state)
 
 	char* token = _glsl_genNextToken(state);
 
-	if(!token){
+	if(!token || !strcmp(token, "void")){
 #ifdef PIX_GLSL_DEBUG
-		printf("Token is null! done parsing!\n");
+		printf("Token is null, or 'void'! done parsing!\n");
 #endif
 		return PIX_GLSL_MSG_DONE_PARSING;
 	}
@@ -206,6 +219,7 @@ int _glsl_parseDecl(struct PixGLSLParseState* state)
 #endif
 		if(!strcmp(token, "attribute")) current->type = PIX_GLSL_ATTRIB;
 		if(!strcmp(token, "uniform"))   current->type = PIX_GLSL_UNI;
+		if(!strcmp(token, "varying"))   current->type = PIX_GLSL_VARYING;
 
 		if(current->type == PIX_GLSL_NONE){
 			return PIX_GLSL_MSG_DONE_PARSING;
