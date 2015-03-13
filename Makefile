@@ -1,7 +1,7 @@
 NAME=PIX
 EDITOR=
 FLAGS=-Wint-to-pointer-cast
-SRC= main.c ./src/*.c
+SRC= main.c ./src/*.c ./include/GL/*.c
 INC=-I./include -I /usr/local/include
 DST=./lib
 LINK= -lglfw3 -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo

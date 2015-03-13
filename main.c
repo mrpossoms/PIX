@@ -1,8 +1,23 @@
 #include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "pix.h"
 #include <math.h>
+#include "pix.h"
+#include "pixShader.h"
+#include <fcntl.h>
+
+char* textfile(const char* path)
+{
+    int fd = open(path, O_RDONLY);
+    off_t len = lseek(fd, 0, SEEK_END);
+    char* txt = malloc(len);
+
+    lseek(fd, 0, SEEK_SET);
+    read(fd, txt, len);
+    close(fd);
+
+    return txt;
+}
 
 int main(void)
 {
@@ -11,10 +26,19 @@ int main(void)
         .height = 600,
         .name   = "PIX",
     };
+    struct PixShader shader;
+    char* shaderSrcs[] = {
+        textfile("./tests/shaders/color.vert"),
+        textfile("./tests/shaders/color.frag"),
+    };
+
+    printf("Vert: %s\n", shaderSrcs[0]);
+    printf("Frag: %s\n", shaderSrcs[1]);
 
     pixInit(settings);
 
     float t = 0;
+    int ret = pixShaderFromSource((const char**)shaderSrcs, &shader);
 
     while (pixShouldBegin())
     {

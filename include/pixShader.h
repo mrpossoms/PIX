@@ -3,11 +3,21 @@
 
 #include <GLFW/glfw3.h>
 
+#define PIX_GRAPHICS_API_GL
+
+#ifdef PIX_GRAPHICS_API_GL
+#include "GL/GLSLparser.h"
+#endif
+
 struct PixShader{
 	GLint program;
-	unsigned int parameterCount;
-	unsigned int attributeCount;
-	unsigned int attributeSizes;
+	PixShaderVal* parameters;
+	unsigned int         parameterCount;
+	PixShaderVal* attributes;
+	unsigned int         attributeCount;
+	unsigned int         attributeSizes;
 };
+
+int pixShaderFromSource(const char* src[], struct PixShader* shader);
 
 #endif

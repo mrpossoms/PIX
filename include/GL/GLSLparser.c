@@ -73,6 +73,7 @@ static const char* GLSL_PRECISIONS[] = {
 // Decl type
 // : attribute
 // : uniform
+// : varying
 
 // Base type
 // | Type name |[ Dimension ]
@@ -331,7 +332,8 @@ int PixGLSLParseSource(
 			printf("Finished parsing decl\n");
 #endif
 			PixGLSLPrintParam(&state->currentParameter);
-		
+			printf("\n");
+
 			if(state->currentParameter.type == PIX_GLSL_ATTRIB){
 #ifdef PIX_GLSL_DEBUG
 				printf("Parsed an attribute, current count %u\n", state->attributeCount);
