@@ -10,7 +10,11 @@ char* textfile(const char* path)
 {
     int fd = open(path, O_RDONLY);
     off_t len = lseek(fd, 0, SEEK_END);
-    char* txt = malloc(len);
+    char* txt = calloc(len + 1, 1);
+
+    if(!fd) printf("File '%s' not opened!\n", path);
+
+    printf("Reading file '%s' (%lldB)\n", path, len);
 
     lseek(fd, 0, SEEK_SET);
     read(fd, txt, len);
@@ -31,9 +35,6 @@ int main(void)
         textfile("./tests/shaders/color.vert"),
         textfile("./tests/shaders/color.frag"),
     };
-
-    printf("Vert: %s\n", shaderSrcs[0]);
-    printf("Frag: %s\n", shaderSrcs[1]);
 
     pixInit(settings);
 

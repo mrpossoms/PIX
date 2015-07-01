@@ -51,7 +51,7 @@ struct PixGLSLParseState{
 	struct PixGLSLParameter  currentParameter;
 };
 
-typedef struct PixGLSLParameter PixShaderVal; 
+typedef struct PixGLSLParameter PixShaderVal;
 
 void PixGLSLPrintParam(struct PixGLSLParameter* param);
 int PixGLSLParseSource(
