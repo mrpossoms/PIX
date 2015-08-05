@@ -31,10 +31,12 @@ struct PixGLSLParameter{
 	char                      name[64];
 	unsigned int              bytes;
 	unsigned int              width, height;
-	unsigned int              arrayLens[3];
+	unsigned int              arrayLens[3]; // dimensions in an array
+	int                       location;
 	enum PixGLSLPrimitiveType dataType;
 	enum PixGLSLPrecision     precision;
 	enum PixGLSLParamType     type;
+	void (*assign)(int loc, ...);
 };
 
 struct PixGLSLParseState{
@@ -50,8 +52,6 @@ struct PixGLSLParseState{
 
 	struct PixGLSLParameter  currentParameter;
 };
-
-typedef struct PixGLSLParameter PixShaderVal;
 
 void PixGLSLPrintParam(struct PixGLSLParameter* param);
 int PixGLSLParseSource(

@@ -3,8 +3,10 @@ attribute vec4 aColor;
 
 varying vec4 vColor;
 
+uniform float uScale;
+
 void main(void)
 {
 	vColor = aColor;
-	gl_Position = vec4(aPosition, 0.0, 1.0);
+	gl_Position = vec4(aPosition * uScale, 0.0, 1.0);
 }

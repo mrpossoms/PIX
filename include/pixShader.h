@@ -8,12 +8,8 @@
 #endif
 
 struct PixShader{
-	int           program;
-	PixShaderVal* parameters;
-	unsigned int  parameterCount;
-	PixShaderVal* attributes;
-	unsigned int  attributeCount;
-	unsigned int  attributeSizes;
+	void* tag;
+	void* params;
 };
 
 int pixShaderFromSource(const char* src[], struct PixShader* shader);
